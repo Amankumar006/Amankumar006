@@ -1,0 +1,54 @@
+name: Update README with Latest Activity
+
+on:
+  # Run automatically every 6 hours
+  schedule:
+    - cron: "0 */6 * * *"
+  
+  # Allows manual trigger
+  workflow_dispatch:
+  
+  # Run on every push to main branch
+  push:
+    branches:
+      - main
+
+jobs:
+  update-readme:
+    name: Update README with latest activity
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update README with GitHub activity
+        uses: jamesgeorge007/github-activity-readme@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          COMMIT_MSG: '⚡ Update README with latest activity'
+          MAX_LINES: 10
+          
+      - name: Update README with recent blog posts
+        uses: gautamkrishnar/blog-post-workflow@v1
+        with:
+          comment_tag_name: "BLOG"
+          commit_message: "📝 Updated README with latest blog posts"
+          feed_list: "https://dev.to/feed/amankumar006"
+          max_post_count: 5
+        continue-on-error: true
+
+      - name: Commit and push if changed
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "🔄 Auto-update README"
+            git push
+          else
+            echo "No changes to commit"
+          fi
